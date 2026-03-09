@@ -68,6 +68,21 @@ Selectionnez individuellement les calendriers a surveiller.
 
 ## Installation
 
+### Via Homebrew (Recommandé)
+
+```bash
+brew tap briangtn/tap
+brew install --cask --no-quarantine screenalert
+```
+*Note : `--no-quarantine` est nécessaire car l'application n'est pas signée avec un certificat Apple Developer.*
+
+Pour mettre à jour :
+```bash
+brew upgrade --cask --no-quarantine screenalert
+```
+
+### Manuelle
+
 1. Telecharger `ScreenAlert.zip` depuis la [derniere release](https://github.com/briangtn/ScreenAlerts/releases/latest)
 2. Dezipper et copier `ScreenAlert.app` dans `/Applications`
 3. Lancer l'app et autoriser l'acces au calendrier

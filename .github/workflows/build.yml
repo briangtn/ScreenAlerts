@@ -35,6 +35,17 @@ jobs:
           cp "Resources/Info.plist" "${APP_DIR}/Contents/"
           echo -n "APPL????" > "${APP_DIR}/Contents/PkgInfo"
 
+          # Version injection
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${VERSION#v}" # Remove 'v' prefix
+          else
+            VERSION="0.0.0-dev"
+          fi
+          
+          plutil -replace CFBundleShortVersionString -string "$VERSION" "${APP_DIR}/Contents/Info.plist"
+          plutil -replace CFBundleVersion -string "${{ github.run_number }}" "${APP_DIR}/Contents/Info.plist"
+
           codesign --force --sign - \
             --entitlements "ScreenAlert.entitlements" \
             "${APP_DIR}"

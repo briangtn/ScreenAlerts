@@ -43,6 +43,24 @@ cp "${BUILD_DIR}/${APP_NAME}" "${APP_DIR}/Contents/MacOS/${APP_NAME}"
 # Copy Info.plist
 cp "${SCRIPT_DIR}/Resources/Info.plist" "${APP_DIR}/Contents/"
 
+# Inject version from git tag
+VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "1.0.0")
+# Remove 'v' prefix if present (e.g. v1.0.0 -> 1.0.0)
+VERSION="${VERSION#v}"
+BUILD_NUMBER=$(git rev-list --count HEAD 2>/dev/null || echo "1")
+
+echo "🏷️  Versioning: ${VERSION} (Build ${BUILD_NUMBER})"
+
+# Use plutil to update the plist (macOS only)
+if command -v plutil &> /dev/null; then
+    plutil -replace CFBundleShortVersionString -string "$VERSION" "${APP_DIR}/Contents/Info.plist"
+    plutil -replace CFBundleVersion -string "$BUILD_NUMBER" "${APP_DIR}/Contents/Info.plist"
+else
+    # Fallback for Linux/other environments (though this script is macOS specific)
+    sed -i '' "s/1.0.0/${VERSION}/g" "${APP_DIR}/Contents/Info.plist"
+    sed -i '' "s/>1</>${BUILD_NUMBER}</g" "${APP_DIR}/Contents/Info.plist"
+fi
+
 # Create PkgInfo
 echo -n "APPL????" > "${APP_DIR}/Contents/PkgInfo"
 
