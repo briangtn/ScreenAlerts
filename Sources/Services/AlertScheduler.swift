@@ -93,9 +93,17 @@ class AlertScheduler: ObservableObject {
             // Skip snoozed events whose snooze hasn't expired
             if let snoozeUntil = snoozedEvents[event.id], Date() < snoozeUntil { continue }
 
+            // Check if this is a snoozed event whose snooze just expired
+            let snoozeExpired = snoozedEvents[event.id] != nil
+
             // Is the event within the alert window?
             let timeUntil = event.startDate.timeIntervalSinceNow
-            if timeUntil > 0 && timeUntil <= alertSeconds {
+            let inAlertWindow = timeUntil > 0 && timeUntil <= alertSeconds
+            // For snoozed events: re-alert if event hasn't ended yet
+            let shouldRealertAfterSnooze = snoozeExpired && event.endDate.timeIntervalSinceNow > 0
+
+            if inAlertWindow || shouldRealertAfterSnooze {
+                snoozedEvents.removeValue(forKey: event.id)
                 DispatchQueue.main.async {
                     appState.activeAlert = event
                     FullScreenWindowManager.shared.showAlert(for: event)
