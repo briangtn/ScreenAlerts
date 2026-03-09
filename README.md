@@ -3,7 +3,7 @@
 Application macOS qui se loge dans la barre de menu et affiche des alertes plein ecran avant le debut de vos evenements calendrier. Impossible de manquer une reunion, meme en mode plein ecran.
 
 <!-- screenshot: Vue d'ensemble de l'alerte plein ecran -->
-<!-- ![Alerte plein ecran](docs/screenshots/alert-fullscreen.png) -->
+![Alerte plein ecran](docs/screenshots/alert.png)
 
 ---
 
@@ -29,12 +29,6 @@ Application macOS qui se loge dans la barre de menu et affiche des alertes plein
 - **Demarrage automatique** : lancement optionnel a l'ouverture de session.
 - **Son d'alerte** : bip systeme, sons macOS, ou fichier audio personnalise.
 
-<!-- screenshot: Alerte avec compte a rebours -->
-<!-- ![Compte a rebours](docs/screenshots/alert-countdown.png) -->
-
-<!-- screenshot: Alerte avec bouton Rejoindre (ex: Zoom) -->
-<!-- ![Bouton Rejoindre](docs/screenshots/alert-join-button.png) -->
-
 ---
 
 ## Parametres
@@ -49,7 +43,8 @@ Application macOS qui se loge dans la barre de menu et affiche des alertes plein
 | Demarrage auto | Lancer l'app a l'ouverture de session | Oui |
 
 <!-- screenshot: Onglet General des preferences -->
-<!-- ![Preferences General](docs/screenshots/settings-general.png) -->
+![Preferences General](docs/screenshots/settings-general-1.png)
+![Preferences General](docs/screenshots/settings-general-2.png)
 
 ### Onglet Apparence
 
@@ -60,14 +55,14 @@ Application macOS qui se loge dans la barre de menu et affiche des alertes plein
 | Couleurs | Personnalisation du fond et du bouton "Rejoindre" | Noir / Vert |
 
 <!-- screenshot: Onglet Apparence des preferences -->
-<!-- ![Preferences Apparence](docs/screenshots/settings-appearance.png) -->
+![Preferences Apparence](docs/screenshots/settings-appearance.png)
 
 ### Onglet Calendriers
 
 Selectionnez individuellement les calendriers a surveiller.
 
 <!-- screenshot: Onglet Calendriers des preferences -->
-<!-- ![Preferences Calendriers](docs/screenshots/settings-calendars-tab.png) -->
+![Preferences Calendriers](docs/screenshots/settings-calendars-tab.png)
 
 ---
 
