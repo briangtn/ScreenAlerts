@@ -8,6 +8,7 @@ class FullScreenWindowManager {
     static let shared = FullScreenWindowManager()
 
     private var panels: [NSPanel] = []
+    private var keyMonitor: Any?
 
     // MARK: - Public API
 
@@ -33,9 +34,13 @@ class FullScreenWindowManager {
 
         // Make the primary panel key
         panels.first?.makeKeyAndOrderFront(nil)
+
+        // Install keyboard shortcuts
+        installKeyboardMonitor(for: event)
     }
 
     func dismissAlert() {
+        removeKeyboardMonitor()
         for panel in panels {
             // Animate out
             NSAnimationContext.runAnimationGroup { context in
@@ -52,6 +57,32 @@ class FullScreenWindowManager {
     }
 
     // MARK: - Private
+
+    private func installKeyboardMonitor(for calendarEvent: CalendarEvent) {
+        removeKeyboardMonitor()
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { nsEvent in
+            switch nsEvent.keyCode {
+            case 36, 76: // Return, Enter (numpad)
+                if let videoLink = calendarEvent.videoLink {
+                    NSWorkspace.shared.open(videoLink.url)
+                    AlertScheduler.shared.dismiss(event: calendarEvent)
+                }
+                return nil
+            case 53: // Escape
+                AlertScheduler.shared.dismiss(event: calendarEvent)
+                return nil
+            default:
+                return nsEvent
+            }
+        }
+    }
+
+    private func removeKeyboardMonitor() {
+        if let monitor = keyMonitor {
+            NSEvent.removeMonitor(monitor)
+            keyMonitor = nil
+        }
+    }
 
     private func createPanel(for screen: NSScreen, event: CalendarEvent) -> NSPanel {
         let panel = NSPanel(

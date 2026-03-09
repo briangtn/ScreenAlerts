@@ -94,6 +94,18 @@ struct AlertOverlayView: View {
                     }
                 }
 
+                // Keyboard shortcut hints
+                HStack(spacing: 16) {
+                    if event.videoLink != nil {
+                        Text("⏎ Rejoindre")
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.35))
+                    }
+                    Text("esc Fermer")
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.35))
+                }
+
                 Spacer()
             }
         }
