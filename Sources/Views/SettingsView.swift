@@ -127,6 +127,23 @@ struct GeneralSettingsView: View {
                         }
                     }
 
+                    HStack {
+                        Text("Volume :")
+                        Slider(value: Binding(
+                            get: { Double(appState.alertVolume) },
+                            set: { appState.alertVolume = Float($0) }
+                        ), in: 0.0...1.0, step: 0.05)
+                        Text("\(Int(appState.alertVolume * 100))%")
+                            .monospacedDigit()
+                            .frame(width: 40, alignment: .trailing)
+                    }
+
+                    if appState.alertSoundName.isEmpty {
+                        Text("Le volume ne s'applique pas au bip système. Choisissez un son pour régler le volume.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+
                     Button("Aperçu") {
                         appState.playAlertSound()
                     }
