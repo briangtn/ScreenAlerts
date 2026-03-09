@@ -5,6 +5,8 @@ Application macOS qui se loge dans la barre de menu et affiche des alertes plein
 <!-- screenshot: Vue d'ensemble de l'alerte plein ecran -->
 ![Alerte plein ecran](docs/screenshots/alert.png)
 
+⚠️ Ce projet à été codé uniquement par IA
+
 ---
 
 ## Table des matieres
