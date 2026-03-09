@@ -13,10 +13,17 @@ A macOS menu bar app that displays full-screen overlay alerts before your calend
 - **Customizable appearance** -- overlay color, opacity, and alert sound
 - **Launch at login** -- optional auto-start via ServiceManagement
 
+## Installation
+
+1. Telecharger `ScreenAlert.zip` depuis la [derniere release](https://github.com/briangtn/ScreenAlerts/releases/latest)
+2. Dezipper l'archive
+3. Copier `ScreenAlert.app` dans `/Applications`
+4. Lancer l'app -- elle apparaitra dans la barre de menu
+5. Autoriser l'acces au calendrier quand macOS le demande
+
 ## Requirements
 
 - macOS 14.0+
-- Swift 6.2+
 - Calendar access permission
 
 ## Build
