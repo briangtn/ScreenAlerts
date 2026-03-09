@@ -1,0 +1,46 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.3.app/Contents/Developer
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Build release
+        run: |
+          swift build -c release
+
+      - name: Create app bundle
+        run: |
+          APP_NAME="ScreenAlert"
+          APP_DIR="build/${APP_NAME}.app"
+
+          mkdir -p "${APP_DIR}/Contents/MacOS"
+          mkdir -p "${APP_DIR}/Contents/Resources"
+
+          cp ".build/release/${APP_NAME}" "${APP_DIR}/Contents/MacOS/${APP_NAME}"
+          cp "Resources/Info.plist" "${APP_DIR}/Contents/"
+          echo -n "APPL????" > "${APP_DIR}/Contents/PkgInfo"
+
+          codesign --force --sign - \
+            --entitlements "ScreenAlert.entitlements" \
+            "${APP_DIR}"
+
+      - name: Upload app bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ScreenAlert.app
+          path: build/ScreenAlert.app
+          if-no-files-found: error
