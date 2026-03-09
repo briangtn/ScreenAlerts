@@ -31,6 +31,9 @@ class AppState: ObservableObject {
     /// Path to a custom sound file selected by the user.
     @Published var customSoundPath: String = ""
 
+    /// Volume for the alert sound (0.0 = silent, 1.0 = maximum).
+    @Published var alertVolume: Float = 1.0
+
     // MARK: - Display
 
     /// Whether to show the alert on all screens or only the primary screen.
@@ -143,6 +146,9 @@ class AppState: ObservableObject {
         if let storedCustomPath = defaults.string(forKey: "customSoundPath") {
             self.customSoundPath = storedCustomPath
         }
+        if defaults.object(forKey: "alertVolume") != nil {
+            self.alertVolume = defaults.float(forKey: "alertVolume")
+        }
 
         // Display
         if defaults.object(forKey: "alertOnAllScreens") != nil {
@@ -202,6 +208,9 @@ class AppState: ObservableObject {
         $customSoundPath.dropFirst()
             .sink { defaults.set($0, forKey: "customSoundPath") }
             .store(in: &cancellables)
+        $alertVolume.dropFirst()
+            .sink { defaults.set($0, forKey: "alertVolume") }
+            .store(in: &cancellables)
         $alertOnAllScreens.dropFirst()
             .sink { defaults.set($0, forKey: "alertOnAllScreens") }
             .store(in: &cancellables)
@@ -240,12 +249,13 @@ class AppState: ObservableObject {
 
     // MARK: - Helpers
 
-    /// Play the configured alert sound.
+    /// Play the configured alert sound at the chosen volume.
     func playAlertSound() {
         guard alertSoundEnabled else { return }
         if alertSoundName == "__custom__" {
             if !customSoundPath.isEmpty,
                let sound = NSSound(contentsOfFile: customSoundPath, byReference: true) {
+                sound.volume = alertVolume
                 sound.play()
             } else {
                 NSSound.beep()
@@ -253,6 +263,7 @@ class AppState: ObservableObject {
         } else if alertSoundName.isEmpty {
             NSSound.beep()
         } else if let sound = NSSound(named: NSSound.Name(alertSoundName)) {
+            sound.volume = alertVolume
             sound.play()
         } else {
             NSSound.beep()
