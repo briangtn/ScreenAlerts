@@ -17,7 +17,7 @@ class AlertScheduler: ObservableObject {
     func start() {
         // Fire immediately, then every 15 seconds
         checkForUpcomingEvents()
-        timer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             self?.checkForUpcomingEvents()
         }
     }
@@ -98,7 +98,10 @@ class AlertScheduler: ObservableObject {
 
             // Is the event within the alert window?
             let timeUntil = event.startDate.timeIntervalSinceNow
-            let inAlertWindow = timeUntil > 0 && timeUntil <= alertSeconds
+            // Trigger if we passed the exact alert time, but not more than 60 seconds ago.
+            // This ensures it fires exactly on the second while handling brief sleeps.
+            let inAlertWindow = timeUntil <= alertSeconds && timeUntil > (alertSeconds - 60)
+            
             // For snoozed events: re-alert if event hasn't ended yet
             let shouldRealertAfterSnooze = snoozeExpired && event.endDate.timeIntervalSinceNow > 0
 

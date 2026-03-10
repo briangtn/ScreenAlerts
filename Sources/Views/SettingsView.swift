@@ -103,7 +103,7 @@ struct UpdatesSettingsView: View {
 struct GeneralSettingsView: View {
     @EnvironmentObject var appState: AppState
 
-    private let alertOptions = [1, 2, 3, 5, 10, 15]
+    private let alertOptions = [0, 1, 2, 3, 5, 10, 15]
     private let availableSnoozeValues = [1, 2, 3, 5, 10, 15, 30, 60]
 
     var body: some View {
@@ -112,7 +112,11 @@ struct GeneralSettingsView: View {
             Section {
                 Picker("Alerte avant l'événement :", selection: $appState.alertMinutesBefore) {
                     ForEach(alertOptions, id: \.self) { minutes in
-                        Text("\(minutes) minute\(minutes > 1 ? "s" : "")").tag(minutes)
+                        if minutes == 0 {
+                            Text("Pile à l'heure").tag(minutes)
+                        } else {
+                            Text("\(minutes) minute\(minutes > 1 ? "s" : "")").tag(minutes)
+                        }
                     }
                 }
                 .pickerStyle(.menu)
