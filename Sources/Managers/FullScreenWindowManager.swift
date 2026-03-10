@@ -13,8 +13,8 @@ class FullScreenWindowManager {
     // MARK: - Public API
 
     func showAlert(for event: CalendarEvent) {
-        // Dismiss any existing alert first
-        dismissAlert()
+        // Close any existing panels without resetting activeAlert
+        closeAllPanels()
 
         // Show on all screens or primary only based on preference
         let screens: [NSScreen]
@@ -40,6 +40,15 @@ class FullScreenWindowManager {
     }
 
     func dismissAlert() {
+        closeAllPanels()
+        AppState.shared.activeAlert = nil
+    }
+
+    // MARK: - Private
+
+    /// Close all overlay panels and remove keyboard monitor,
+    /// without touching `activeAlert` state.
+    private func closeAllPanels() {
         removeKeyboardMonitor()
         for panel in panels {
             // Animate out
@@ -51,12 +60,7 @@ class FullScreenWindowManager {
             }
         }
         panels.removeAll()
-        DispatchQueue.main.async {
-            AppState.shared.activeAlert = nil
-        }
     }
-
-    // MARK: - Private
 
     private func installKeyboardMonitor(for calendarEvent: CalendarEvent) {
         removeKeyboardMonitor()
