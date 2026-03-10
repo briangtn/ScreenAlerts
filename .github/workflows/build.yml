@@ -121,7 +121,11 @@ jobs:
         if: github.event_name == 'release'
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          GH_TOKEN: ${{ github.token }}
         run: |
+          TAG="${{ github.event.release.tag_name }}"
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/"
+
           if [ -z "$SPARKLE_PRIVATE_KEY" ]; then
             echo "::error::SPARKLE_PRIVATE_KEY secret is not set, cannot generate appcast"
             exit 1
@@ -131,47 +135,43 @@ jobs:
           mkdir -p updates
           cp build/ScreenAlert.zip updates/
           echo "Copied ScreenAlert.zip to updates/ ($(ls -lh updates/ScreenAlert.zip | awk '{print $5}'))"
+          echo "::endgroup::"
 
-          if [ -f "appcast.xml" ]; then
-            cp appcast.xml updates/
-            echo "Copied existing appcast.xml to updates/"
+          echo "::group::Fetching previous appcast from latest release..."
+          LATEST_APPCAST_URL="https://github.com/${{ github.repository }}/releases/latest/download/appcast.xml"
+          if curl -fsSL -o updates/appcast.xml "$LATEST_APPCAST_URL" 2>/dev/null; then
+            echo "Downloaded existing appcast.xml from previous release"
+            cat updates/appcast.xml
           else
-            echo "No existing appcast.xml found, will create a new one"
+            echo "No previous appcast found, will create a new one"
           fi
           echo "::endgroup::"
 
           echo "::group::Generating appcast with EdDSA signature..."
-          echo "$SPARKLE_PRIVATE_KEY" | .build/artifacts/sparkle/Sparkle/bin/generate_appcast --ed-key-file - updates/
+          echo "Download URL prefix: ${DOWNLOAD_URL}"
+          echo "$SPARKLE_PRIVATE_KEY" | .build/artifacts/sparkle/Sparkle/bin/generate_appcast \
+            --ed-key-file - \
+            --download-url-prefix "$DOWNLOAD_URL" \
+            updates/
           echo "Appcast generated successfully"
           echo "::endgroup::"
 
-          echo "::group::Copying appcast to repository root..."
-          cp updates/appcast.xml ./
-          echo "Final appcast.xml:"
-          cat appcast.xml
+          echo "::group::Final appcast.xml content..."
+          cat updates/appcast.xml
           echo "::endgroup::"
 
-      - name: Attach to GitHub Release
+          cp updates/appcast.xml ./
+
+      - name: Upload release assets
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "Uploading ScreenAlert.zip to release ${{ github.event.release.tag_name }}..."
-          gh release upload "${{ github.event.release.tag_name }}" build/ScreenAlert.zip --clobber
-          echo "Upload complete"
-
-      - name: Commit appcast.xml back to repository
-        if: github.event_name == 'release'
-        run: |
-          if [ -f "appcast.xml" ]; then
-            echo "Committing appcast.xml to main..."
-            git config --global user.name "github-actions[bot]"
-            git config --global user.email "github-actions[bot]@users.noreply.github.com"
-            git add appcast.xml
-            git diff --cached --stat
-            git commit -m "Update appcast.xml for release ${{ github.event.release.tag_name }} [skip ci]" || echo "No changes to commit"
-            git push origin HEAD:main
-            echo "appcast.xml pushed to main"
-          else
-            echo "::warning::appcast.xml not found, skipping commit"
-          fi
+          TAG="${{ github.event.release.tag_name }}"
+          echo "Uploading assets to release ${TAG}..."
+          gh release upload "$TAG" build/ScreenAlert.zip --clobber
+          echo "Uploaded ScreenAlert.zip"
+          gh release upload "$TAG" appcast.xml --clobber
+          echo "Uploaded appcast.xml"
+          echo "Release assets:"
+          gh release view "$TAG" --json assets --jq '.assets[].name'
