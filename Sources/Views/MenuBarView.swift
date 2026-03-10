@@ -1,9 +1,18 @@
 import SwiftUI
+import Sparkle
 
 /// Content of the MenuBarExtra dropdown window.
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
     @ObservedObject var calendarService = CalendarService.shared
+    
+    let updater: SPUUpdater
+    @StateObject private var updaterViewModel: UpdaterViewModel
+
+    init(updater: SPUUpdater) {
+        self.updater = updater
+        _updaterViewModel = StateObject(wrappedValue: UpdaterViewModel(updater: updater))
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -51,6 +60,13 @@ struct MenuBarView: View {
                     Text("Préférences...")
                 }
                 .buttonStyle(.borderless)
+                
+                Button("Mises à jour") {
+                    updater.checkForUpdates()
+                }
+                .buttonStyle(.borderless)
+                .disabled(!updaterViewModel.canCheckForUpdates)
+                .padding(.leading, 8)
 
                 Spacer()
 

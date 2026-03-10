@@ -1,11 +1,14 @@
 import SwiftUI
 import EventKit
 import UniformTypeIdentifiers
+import Sparkle
 
 /// Preferences window accessible from the menu bar.
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     @ObservedObject var calendarService = CalendarService.shared
+    
+    let updater: SPUUpdater
 
     var body: some View {
         TabView {
@@ -26,6 +29,11 @@ struct SettingsView: View {
                 .tabItem {
                     Label("Calendriers", systemImage: "calendar")
                 }
+                
+            UpdatesSettingsView(updater: updater)
+                .tabItem {
+                    Label("Mises à jour", systemImage: "arrow.triangle.2.circlepath")
+                }
         }
         .frame(width: 520, height: 480)
         .onAppear {
@@ -35,6 +43,58 @@ struct SettingsView: View {
                 NSApp.keyWindow?.orderFrontRegardless()
             }
         }
+    }
+}
+
+// MARK: - Updates Settings
+
+struct UpdatesSettingsView: View {
+    let updater: SPUUpdater
+    @StateObject private var updaterViewModel: UpdaterViewModel
+    @State private var automaticallyChecksForUpdates: Bool
+    
+    init(updater: SPUUpdater) {
+        self.updater = updater
+        _updaterViewModel = StateObject(wrappedValue: UpdaterViewModel(updater: updater))
+        _automaticallyChecksForUpdates = State(initialValue: updater.automaticallyChecksForUpdates)
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack {
+                        Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
+                            .font(.system(size: 48))
+                            .foregroundColor(.blue)
+                            
+                        VStack(alignment: .leading) {
+                            Text("Mises à jour de ScreenAlert")
+                                .font(.headline)
+                            Text("Version actuelle : \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Inconnue") (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"))")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.leading, 8)
+                    }
+                    .padding(.bottom, 8)
+                    
+                    Toggle("Vérifier automatiquement les mises à jour", isOn: $automaticallyChecksForUpdates)
+                        .onChange(of: automaticallyChecksForUpdates) { _, newValue in
+                            updater.automaticallyChecksForUpdates = newValue
+                        }
+                    
+                    Button("Vérifier maintenant...") {
+                        updater.checkForUpdates()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!updaterViewModel.canCheckForUpdates)
+                }
+                .padding()
+            }
+        }
+        .formStyle(.grouped)
+        .padding(20)
     }
 }
 

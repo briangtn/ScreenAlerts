@@ -30,5 +30,11 @@
     <string>ScreenAlert a besoin d'accéder à vos calendriers pour afficher des alertes avant vos événements.</string>
     <key>NSCalendarsFullAccessUsageDescription</key>
     <string>ScreenAlert a besoin d'accéder à vos calendriers pour afficher des alertes avant vos événements.</string>
+
+    <!-- Sparkle Updater Configuration -->
+    <key>SUFeedURL</key>
+    <string>https://raw.githubusercontent.com/briangtn/ScreenAlerts/main/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>aDn3CYS9q7ZUK66y1qut8dFxItKHDPf56n3QRUYwMSc=</string>
 </dict>
 </plist>

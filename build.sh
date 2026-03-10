@@ -24,6 +24,7 @@ fi
 
 BUILD_DIR="${SCRIPT_DIR}/.build/${CONFIG}"
 APP_DIR="${SCRIPT_DIR}/build/${BUNDLE_NAME}"
+SPARKLE_FRAMEWORK="${SCRIPT_DIR}/.build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework"
 
 echo "🔨 Building ${APP_NAME} (${CONFIG})..."
 
@@ -36,9 +37,13 @@ echo "📦 Creating app bundle..."
 rm -rf "$APP_DIR"
 mkdir -p "${APP_DIR}/Contents/MacOS"
 mkdir -p "${APP_DIR}/Contents/Resources"
+mkdir -p "${APP_DIR}/Contents/Frameworks"
 
 # Copy the binary
 cp "${BUILD_DIR}/${APP_NAME}" "${APP_DIR}/Contents/MacOS/${APP_NAME}"
+
+# Copy Sparkle framework (preserve symlinks)
+cp -a "$SPARKLE_FRAMEWORK" "${APP_DIR}/Contents/Frameworks/"
 
 # Copy Info.plist
 cp "${SCRIPT_DIR}/Resources/Info.plist" "${APP_DIR}/Contents/"
@@ -64,11 +69,27 @@ fi
 # Create PkgInfo
 echo -n "APPL????" > "${APP_DIR}/Contents/PkgInfo"
 
-# Ad-hoc code sign with entitlements
-echo "🔏 Signing app bundle..."
-codesign --force --sign - \
-    --entitlements "${SCRIPT_DIR}/ScreenAlert.entitlements" \
-    "${APP_DIR}"
+# Code sign with persistent certificate (to preserve TCC) or fallback to ad-hoc
+IDENTITY="ScreenAlert App Signing"
+
+if security find-certificate -c "$IDENTITY" >/dev/null 2>&1; then
+    echo "🔏 Signing with identity: $IDENTITY..."
+    # Sign Sparkle framework first
+    codesign --force --sign "$IDENTITY" --options runtime \
+        "${APP_DIR}/Contents/Frameworks/Sparkle.framework"
+    # Sign main app
+    codesign --force --sign "$IDENTITY" --options runtime \
+        --entitlements "${SCRIPT_DIR}/ScreenAlert.entitlements" \
+        "${APP_DIR}"
+else
+    echo "⚠️  Signing identity '$IDENTITY' not found in keychain!"
+    echo "⚠️  Falling back to ad-hoc signing. TCC permissions will be lost on next update."
+    codesign --force --sign - \
+        "${APP_DIR}/Contents/Frameworks/Sparkle.framework"
+    codesign --force --sign - \
+        --entitlements "${SCRIPT_DIR}/ScreenAlert.entitlements" \
+        "${APP_DIR}"
+fi
 
 echo ""
 echo "✅ Build complete: ${APP_DIR}"

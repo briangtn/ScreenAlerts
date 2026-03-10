@@ -17,8 +17,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Show Swift version
-        run: swift --version
+      - name: Import Certificate
+        env:
+          SIGNING_CERTIFICATE_P12_DATA: ${{ secrets.SIGNING_CERTIFICATE_P12_DATA }}
+          SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}
+        if: env.SIGNING_CERTIFICATE_P12_DATA != ''
+        run: |
+          echo $SIGNING_CERTIFICATE_P12_DATA | base64 --decode > certificate.p12
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security import certificate.p12 -k build.keychain -P "$SIGNING_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
 
       - name: Build release
         run: swift build -c release
@@ -27,11 +37,14 @@ jobs:
         run: |
           APP_NAME="ScreenAlert"
           APP_DIR="build/${APP_NAME}.app"
+          SPARKLE_FRAMEWORK=".build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework"
 
           mkdir -p "${APP_DIR}/Contents/MacOS"
           mkdir -p "${APP_DIR}/Contents/Resources"
+          mkdir -p "${APP_DIR}/Contents/Frameworks"
 
           cp ".build/release/${APP_NAME}" "${APP_DIR}/Contents/MacOS/${APP_NAME}"
+          cp -a "$SPARKLE_FRAMEWORK" "${APP_DIR}/Contents/Frameworks/"
           cp "Resources/Info.plist" "${APP_DIR}/Contents/"
           echo -n "APPL????" > "${APP_DIR}/Contents/PkgInfo"
 
@@ -46,9 +59,26 @@ jobs:
           plutil -replace CFBundleShortVersionString -string "$VERSION" "${APP_DIR}/Contents/Info.plist"
           plutil -replace CFBundleVersion -string "${{ github.run_number }}" "${APP_DIR}/Contents/Info.plist"
 
-          codesign --force --sign - \
-            --entitlements "ScreenAlert.entitlements" \
-            "${APP_DIR}"
+          if security find-certificate -c "ScreenAlert App Signing" >/dev/null 2>&1; then
+            echo "Signing with certificate..."
+            codesign --force --sign "ScreenAlert App Signing" --options runtime \
+              "${APP_DIR}/Contents/Frameworks/Sparkle.framework"
+            codesign --force --sign "ScreenAlert App Signing" --options runtime \
+              --entitlements "ScreenAlert.entitlements" \
+              "${APP_DIR}"
+          else
+            echo "Signing with ad-hoc..."
+            codesign --force --sign - \
+              "${APP_DIR}/Contents/Frameworks/Sparkle.framework"
+            codesign --force --sign - \
+              --entitlements "ScreenAlert.entitlements" \
+              "${APP_DIR}"
+          fi
+
+      - name: Create Zip Archive (ditto)
+        run: |
+          cd build
+          ditto -c -k --sequesterRsrc --keepParent ScreenAlert.app ScreenAlert.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -57,12 +87,45 @@ jobs:
           path: build/ScreenAlert.app
           if-no-files-found: error
 
-      - name: Zip app bundle for release
+      - name: Generate Sparkle Appcast & Sign Update
         if: github.event_name == 'release'
-        run: cd build && zip -r ScreenAlert.zip ScreenAlert.app
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          # Only sign update if we have the EdDSA private key
+          if [ -n "$SPARKLE_PRIVATE_KEY" ]; then
+            echo "$SPARKLE_PRIVATE_KEY" > sparkle_priv.key
+            .build/artifacts/sparkle/Sparkle/bin/generate_keys -f sparkle_priv.key
+            
+            mkdir -p updates
+            cp build/ScreenAlert.zip updates/
+            
+            # Use the existing appcast.xml if it exists to append to it
+            if [ -f "appcast.xml" ]; then
+              cp appcast.xml updates/
+            fi
+            
+            .build/artifacts/sparkle/Sparkle/bin/generate_appcast updates/
+            
+            cp updates/appcast.xml ./
+          else
+            echo "Warning: SPARKLE_PRIVATE_KEY not set, cannot generate appcast"
+          fi
 
       - name: Attach to GitHub Release
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" build/ScreenAlert.zip --clobber
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" build/ScreenAlert.zip --clobber
+
+      - name: Commit appcast.xml back to repository
+        if: github.event_name == 'release'
+        run: |
+          if [ -f "appcast.xml" ]; then
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git add appcast.xml
+            git commit -m "Update appcast.xml for release ${{ github.event.release.tag_name }} [skip ci]" || echo "No changes to commit"
+            git push origin HEAD:main
+          fi
