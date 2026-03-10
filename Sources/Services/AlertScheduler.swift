@@ -104,11 +104,9 @@ class AlertScheduler: ObservableObject {
 
             if inAlertWindow || shouldRealertAfterSnooze {
                 snoozedEvents.removeValue(forKey: event.id)
-                DispatchQueue.main.async {
-                    appState.activeAlert = event
-                    FullScreenWindowManager.shared.showAlert(for: event)
-                    appState.playAlertSound()
-                }
+                appState.activeAlert = event
+                FullScreenWindowManager.shared.showAlert(for: event)
+                appState.playAlertSound()
                 return // one alert at a time
             }
         }
