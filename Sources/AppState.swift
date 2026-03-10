@@ -127,8 +127,11 @@ class AppState: ObservableObject {
         let defaults = UserDefaults.standard
 
         // Restore from UserDefaults
-        let stored = defaults.integer(forKey: "alertMinutesBefore")
-        self.alertMinutesBefore = stored > 0 ? stored : 1
+        if defaults.object(forKey: "alertMinutesBefore") != nil {
+            self.alertMinutesBefore = defaults.integer(forKey: "alertMinutesBefore")
+        } else {
+            self.alertMinutesBefore = 1
+        }
         self.isPaused = defaults.bool(forKey: "isPaused")
 
         // Snooze durations
