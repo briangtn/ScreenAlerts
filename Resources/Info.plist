@@ -33,7 +33,7 @@
 
     <!-- Sparkle Updater Configuration -->
     <key>SUFeedURL</key>
-    <string>https://raw.githubusercontent.com/briangtn/ScreenAlerts/main/appcast.xml</string>
+    <string>https://github.com/briangtn/ScreenAlerts/releases/latest/download/appcast.xml</string>
     <key>SUPublicEDKey</key>
     <string>aDn3CYS9q7ZUK66y1qut8dFxItKHDPf56n3QRUYwMSc=</string>
 </dict>
