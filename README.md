@@ -74,13 +74,12 @@ Selectionnez individuellement les calendriers a surveiller.
 
 ```bash
 brew tap briangtn/tap
-brew install --cask --no-quarantine screenalert
+brew install --cask screenalert
 ```
-*Note : `--no-quarantine` est nécessaire car l'application n'est pas signée avec un certificat Apple Developer.*
 
 Pour mettre à jour :
 ```bash
-brew upgrade --cask --no-quarantine screenalert
+brew upgrade --cask screenalert
 ```
 
 ### Manuelle
