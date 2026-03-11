@@ -92,6 +92,25 @@ struct UpdatesSettingsView: View {
                 }
                 .padding()
             }
+            
+            Section {
+                VStack(alignment: .leading, spacing: 12) {
+                    Label("Permission de mise à jour", systemImage: "lock.shield")
+                        .font(.headline)
+                        
+                    Text("Si les mises à jour automatiques échouent, macOS bloque peut-être l'installation. Vous devez autoriser ScreenAlert à gérer les applications.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        
+                    Button("Ouvrir les Réglages de Sécurité") {
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AppBundles") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                }
+                .padding()
+            }
         }
         .formStyle(.grouped)
         .padding(20)

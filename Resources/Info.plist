@@ -27,9 +27,9 @@
 
     <!-- Privacy usage descriptions for calendar access -->
     <key>NSCalendarsUsageDescription</key>
-    <string>ScreenAlert a besoin d'accéder à vos calendriers pour afficher des alertes avant vos événements.</string>
+    <string>ScreenAlert a besoin d'accéder à vos calendriers uniquement en lecture pour afficher des alertes avant vos événements.</string>
     <key>NSCalendarsFullAccessUsageDescription</key>
-    <string>ScreenAlert a besoin d'accéder à vos calendriers pour afficher des alertes avant vos événements.</string>
+    <string>ScreenAlert a besoin d'accéder à vos calendriers uniquement en lecture pour afficher des alertes avant vos événements.</string>
 
     <!-- Sparkle Updater Configuration -->
     <key>SUFeedURL</key>
