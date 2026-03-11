@@ -56,6 +56,14 @@ class CalendarService: ObservableObject {
         DispatchQueue.main.async { [weak self] in
             self?.events = ekEvents
                 .filter { includeAllDay || !$0.isAllDay }
+                .filter { $0.status != .canceled }
+                .filter { ekEvent in
+                    guard let attendees = ekEvent.attendees,
+                          let me = attendees.first(where: { $0.isCurrentUser }) else {
+                        return true
+                    }
+                    return me.participantStatus != .declined
+                }
                 .sorted { $0.startDate < $1.startDate }
                 .map { CalendarEvent(from: $0) }
         }
