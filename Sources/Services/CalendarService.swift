@@ -87,6 +87,9 @@ class CalendarService: ObservableObject {
     }
 
     @objc private func calendarChanged() {
-        refreshEvents()
+        // EKEventStoreChanged is posted on a background thread. Dispatch to main
+        // so that EventKit calls in refreshEvents() run on the main thread, as
+        // Apple recommends.
+        DispatchQueue.main.async { self.refreshEvents() }
     }
 }

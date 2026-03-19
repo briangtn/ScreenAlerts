@@ -15,11 +15,16 @@ class AlertScheduler: ObservableObject {
     // MARK: - Public API
 
     func start() {
-        // Fire immediately, then every 15 seconds
+        // Fire immediately, then every second.
+        // Use .common run loop mode so the timer keeps firing even when the
+        // menu bar is open (which puts the run loop in NSEventTrackingRunLoopMode,
+        // causing timers scheduled in .default mode to pause).
         checkForUpcomingEvents()
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+        let t = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
             self?.checkForUpcomingEvents()
         }
+        RunLoop.main.add(t, forMode: .common)
+        timer = t
     }
 
     func stop() {
