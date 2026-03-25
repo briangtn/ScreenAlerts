@@ -4,17 +4,20 @@ import ServiceManagement
 /// App delegate handling lifecycle events.
 class AppDelegate: NSObject, NSApplicationDelegate {
 
-    /// Token returned by ProcessInfo to keep App Nap disabled for the
-    /// lifetime of the process.  Without this, macOS may throttle our
-    /// 1-second NSTimer when the app has no visible window, causing the
-    /// alert window to be silently missed.
+    /// Token returned by ProcessInfo to prevent App Nap for the lifetime
+    /// of the process. Without this, macOS may throttle our 1-second NSTimer
+    /// when the app has no visible window, causing alerts to be silently missed.
+    /// Note: .userInitiated prevents App Nap / timer throttling while still
+    /// allowing idle system sleep (no battery/thermal impact).
     private var activityToken: NSObjectProtocol?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Prevent App Nap — critical for a menu-bar-only app whose timers
         // must fire reliably even when no window is on screen.
+        // .userInitiated is sufficient: it blocks App Nap without preventing
+        // idle system sleep (unlike .idleSystemSleepDisabled).
         activityToken = ProcessInfo.processInfo.beginActivity(
-            options: [.userInitiated, .idleSystemSleepDisabled],
+            options: .userInitiated,
             reason: "Monitoring calendar events for screen alerts"
         )
 
@@ -42,5 +45,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         AlertScheduler.shared.stop()
+        if let token = activityToken {
+            ProcessInfo.processInfo.endActivity(token)
+        }
     }
 }
