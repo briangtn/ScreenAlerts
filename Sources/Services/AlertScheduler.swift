@@ -103,9 +103,11 @@ class AlertScheduler: ObservableObject {
 
             // Is the event within the alert window?
             let timeUntil = event.startDate.timeIntervalSinceNow
-            // Trigger if we passed the exact alert time, but not more than 60 seconds ago.
-            // This ensures it fires exactly on the second while handling brief sleeps.
-            let inAlertWindow = timeUntil <= alertSeconds && timeUntil > (alertSeconds - 60)
+            // Trigger if we are within alertMinutesBefore of the event AND the event
+            // hasn't ended yet. No lower bound: even if the timer was throttled by
+            // App Nap or delayed by system sleep, the alert will still fire as long
+            // as the meeting is ongoing. The alertedEventIDs set prevents duplicates.
+            let inAlertWindow = timeUntil <= alertSeconds && event.endDate.timeIntervalSinceNow > 0
             
             // For snoozed events: re-alert if event hasn't ended yet
             let shouldRealertAfterSnooze = snoozeExpired && event.endDate.timeIntervalSinceNow > 0
