@@ -25,6 +25,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         CalendarService.shared.requestAccess()
         AlertScheduler.shared.start()
 
+        // React to system wake from sleep: refresh stale calendar data and
+        // clear dismissed-event tracking so the first morning alert fires.
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(handleSystemWake),
+            name: NSWorkspace.didWakeNotification,
+            object: nil
+        )
+
         // Log launch at login status for diagnostics
         let status = SMAppService.mainApp.status
         let statusLabel: String
@@ -45,8 +54,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         AlertScheduler.shared.stop()
+        NSWorkspace.shared.notificationCenter.removeObserver(self)
         if let token = activityToken {
             ProcessInfo.processInfo.endActivity(token)
         }
+    }
+
+    // MARK: - Sleep / Wake
+
+    @objc private func handleSystemWake() {
+        print("[ScreenAlert] System woke from sleep. Refreshing calendar data…")
+
+        // The event list is stale (last refresh was before sleep, possibly
+        // hours ago). Reload calendars and events immediately so the
+        // scheduler has up-to-date data for the first check after wake.
+        let calendarService = CalendarService.shared
+        calendarService.requestAccess()
+
+        // Clear dismissed/snoozed event IDs — after an overnight sleep they
+        // are obsolete and would prevent legitimate alerts from firing.
+        AlertScheduler.shared.reset()
     }
 }

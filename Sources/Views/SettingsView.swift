@@ -6,7 +6,7 @@ import Sparkle
 /// Preferences window accessible from the menu bar.
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
-    @ObservedObject var calendarService = CalendarService.shared
+    @EnvironmentObject var calendarService: CalendarService
     
     let updater: SPUUpdater
 
@@ -24,7 +24,7 @@ struct SettingsView: View {
                     Label("Apparence", systemImage: "paintbrush")
                 }
 
-            CalendarSettingsView(calendarService: calendarService)
+            CalendarSettingsView()
                 .environmentObject(appState)
                 .tabItem {
                     Label("Calendriers", systemImage: "calendar")
@@ -398,7 +398,7 @@ struct AppearanceSettingsView: View {
 // MARK: - Calendar Settings
 
 struct CalendarSettingsView: View {
-    @ObservedObject var calendarService: CalendarService
+    @EnvironmentObject var calendarService: CalendarService
     @EnvironmentObject var appState: AppState
 
     var body: some View {
