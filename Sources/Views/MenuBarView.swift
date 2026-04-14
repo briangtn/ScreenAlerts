@@ -1,13 +1,21 @@
 import SwiftUI
+import EventKit
 import Sparkle
 
 /// Content of the MenuBarExtra dropdown window.
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
-    @ObservedObject var calendarService = CalendarService.shared
+    @EnvironmentObject var calendarService: CalendarService
     
     let updater: SPUUpdater
     @StateObject private var updaterViewModel: UpdaterViewModel
+
+    // Local copies of CalendarService data, updated via onReceive.
+    // On macOS 26 (Tahoe), MenuBarExtra(.window) does not re-render
+    // when @EnvironmentObject / @Published properties change.  Using
+    // @State + onReceive guarantees the view refreshes.
+    @State private var events: [CalendarEvent] = []
+    @State private var authStatus: EKAuthorizationStatus = EKEventStore.authorizationStatus(for: .event)
 
     init(updater: SPUUpdater) {
         self.updater = updater
@@ -43,14 +51,8 @@ struct MenuBarView: View {
 
             Divider()
 
-            // Content
-            if !calendarService.hasAccess {
-                noAccessView
-            } else if calendarService.events.isEmpty {
-                emptyView
-            } else {
-                eventListView
-            }
+            // Content — driven by local @State copies
+            contentView
 
             Divider()
 
@@ -80,9 +82,47 @@ struct MenuBarView: View {
             .padding(.vertical, 10)
         }
         .frame(width: 360)
+        .onAppear {
+            // Force a fresh data load every time the menu opens.
+            calendarService.requestAccess()
+            // Snapshot current state immediately (in case onReceive
+            // hasn't fired yet).
+            events = calendarService.events
+            authStatus = calendarService.authStatus
+        }
+        // Explicitly subscribe to Combine publishers so @State changes
+        // trigger a guaranteed re-render, even if @EnvironmentObject
+        // observation is broken in MenuBarExtra on macOS 26.
+        .onReceive(calendarService.$events) { events = $0 }
+        .onReceive(calendarService.$authStatus) { authStatus = $0 }
     }
 
     // MARK: - Sub-views
+
+    /// Picks the right content view based on local @State copies.
+    @ViewBuilder
+    private var contentView: some View {
+        switch authStatus {
+        case .fullAccess:
+            if events.isEmpty {
+                emptyView
+            } else {
+                eventListView
+            }
+
+        case .writeOnly:
+            writeOnlyAccessView
+
+        case .notDetermined:
+            noAccessView
+
+        case .denied, .restricted:
+            noAccessView
+
+        @unknown default:
+            noAccessView
+        }
+    }
 
     private var noAccessView: some View {
         VStack(spacing: 8) {
@@ -93,6 +133,32 @@ struct MenuBarView: View {
                 .font(.subheadline)
                 .fontWeight(.medium)
             Text("Autorisez l'accès dans\nRéglages Système > Confidentialité > Calendriers")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+
+            Button("Ouvrir Réglages Système") {
+                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars") {
+                    NSWorkspace.shared.open(url)
+                }
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .padding(.top, 4)
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity)
+    }
+
+    private var writeOnlyAccessView: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "calendar.badge.exclamationmark")
+                .font(.system(size: 36))
+                .foregroundColor(.orange)
+            Text("Accès limité (écriture seule)")
+                .font(.subheadline)
+                .fontWeight(.medium)
+            Text("ScreenAlert a besoin de lire vos événements.\nDans Réglages Système > Confidentialité > Calendriers,\npassez ScreenAlert en « Accès complet ».")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -124,17 +190,14 @@ struct MenuBarView: View {
     }
 
     private var eventListView: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 2) {
-                ForEach(calendarService.events.prefix(10)) { event in
-                    EventRow(event: event, onShowAlert: {
-                        AlertScheduler.shared.showAlertManually(for: event)
-                    })
-                }
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(events.prefix(10)) { event in
+                EventRow(event: event, onShowAlert: {
+                    AlertScheduler.shared.showAlertManually(for: event)
+                })
             }
-            .padding(.vertical, 8)
         }
-        .frame(maxHeight: 400)
+        .padding(.vertical, 8)
     }
 }
 
