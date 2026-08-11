@@ -116,6 +116,15 @@ Customize the look of the alert overlay.
 | Accent color | Color of the "Join" button | Green |
 | Text color | Color of the alert text | White |
 
+A live preview updates as you tweak the settings.
+
+<details>
+<summary>Screenshot</summary>
+
+![Appearance settings — opacity, colors, and preview](docs/screenshots/settings-apparence.png)
+
+</details>
+
 ### Calendars
 
 Choose which calendars to monitor. All calendars from Apple Calendar are listed — toggle individually.
