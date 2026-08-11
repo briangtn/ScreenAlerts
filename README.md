@@ -3,7 +3,7 @@
 **Never miss a meeting again.** A macOS menu bar app that displays full-screen overlay alerts before your calendar events start — even over full-screen apps.
 
 > [!WARNING]
-> This project is entirely **vibe-coded** — 100% of the code was written by AI. Use at your own risk, contributions welcome!
+> This project is entirely **vibe-coded** — 100% of the code was written by AI. Contributions welcome!
 
 > [!NOTE]
 > **Fully local & private.** ScreenAlert runs entirely on your Mac — no account, no server, no data leaves your machine. It reads your calendars through Apple's EventKit framework and stores preferences locally via UserDefaults.
