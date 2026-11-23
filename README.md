@@ -32,6 +32,7 @@
 ### Homebrew (recommended)
 
 ```bash
+brew trust --cask briangtn/tap/screenalert
 brew tap briangtn/tap
 brew install --cask screenalert
 ```
